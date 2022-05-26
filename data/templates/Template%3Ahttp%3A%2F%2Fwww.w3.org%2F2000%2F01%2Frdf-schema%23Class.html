@@ -1,0 +1,276 @@
+<template-fragment id='cardinality'>
+  <span style='font-size:14px;white-space:nowrap'><strong><semantic-link iri='{{property.value}}'></semantic-link> </strong>
+  {{#if (cond-or min max)}}
+    {{#if (cond-eq min.value max.value)}} 
+      {{min.value}}
+    {{else}}
+      {{#if min}} {{min.value}}{{else}} 0{{/if}}..
+      {{~#if max}}{{max.value}}{{else}}*{{/if}}
+    {{/if}}
+  {{/if}}
+  </span>
+</template-fragment>
+
+<div class="page">
+  <div class='page__header-navtabs'>
+    [[> Platform:DefaultResourceHeader]]
+  </div>
+  <bs-tabs id="tabs" class='page__body-navtabs' unmount-on-exit=true>
+        <bs-tab event-key='1' title="Overview">
+      <h2>Metadata:</h2>
+      <semantic-table query='SELECT distinct ?p ?o WHERE {
+                                ?? ?p ?o .
+                                FILTER(?p NOT IN(rdf:type))
+                            }'
+          options='{
+            "groupingOptions": {
+              "groupedBy": ["p"],
+              "showOnlyAggregatedValue": true
+            },
+            "showFilter":false,
+            "showTableHeading": false
+          }'
+          column-configuration='[
+            {
+              "displayName":"Property",
+              "variableName": "p",
+              "cellTemplate": "{{> propertyLabelTemplate property=p.value}}"
+            },
+            {
+              "displayName":"Object",
+              "variableName": "o",
+              "aggregation": "concat"
+            }
+          ]'>
+          <template id='propertyLabelTemplate'>
+            <mp-label iri='{{property}}'></mp-label>
+          </template>
+        </semantic-table>
+
+      <h2>Attributes and relations:</h2>
+
+        <semantic-table query='SELECT distinct ?property ?type ?label ?comment ?min ?max ?expectedType ?inference WHERE {
+                              {
+                                ?nodeShape <http://www.w3.org/ns/shacl#targetClass> ?? .
+                                ?nodeShape <http://www.w3.org/ns/shacl#property> ?sh .
+                                BIND("direct" as ?inference)
+                              } UNION {
+                                ?? <http://www.w3.org/ns/shacl#property> ?sh .
+                                BIND("direct" as ?inference)
+                              } UNION {
+                                ?nodeShape <http://www.w3.org/ns/shacl#targetClass>/^(owl:subClassOf|rdfs:subClassOf)+ ?? .
+                                ?nodeShape <http://www.w3.org/ns/shacl#property> ?sh .
+                                BIND("infered" as ?inference)
+                              } UNION {
+                                ?? ^(owl:subClassOf|rdfs:subClassOf)+/<http://www.w3.org/ns/shacl#property> ?sh .
+                                BIND("infered" as ?inference)
+                              }
+                              ?sh <http://www.w3.org/ns/shacl#path> ?property .
+                              ?property a ?type .
+                              OPTIONAL {?property rdfs:label ?label }
+                              OPTIONAL {?property rdfs:comment ?comment }
+                              OPTIONAL { ?sh sh:class|sh:datatype ?expectedType }
+                              OPTIONAL { ?sh sh:maxCount ?max }
+                              OPTIONAL { ?sh sh:minCount ?min }
+                              FILTER(ISIRI(?property))
+                            }'
+            options='{"enableGrouping": true, "enableSort": true,"showColumnFilters": true, "showColumnToggle": true, "showNumberOfRows": true, "pageSizeSelection":true}'
+            column-configuration='[
+              {"variableName": "property", "displayName": "Name", "cellTemplate": "{{> ::cardinality }}"},
+              {"variableName": "type", "displayName": "Type", "cellTemplate": "{{#if (cond-eq type.value \"http://www.w3.org/2002/07/owl#DatatypeProperty\")}}Attribute{{else}}Relation{{/if}}"},
+              {"variableName": "inference", "displayName": "Inference"},
+              {"variableName": "expectedType", "displayName": "Expected type", "cellTemplate": "{{#if expectedType}}<semantic-link iri=\"{{expectedType.value}}\"></semantic-link>{{else}}Literal{{/if}}"},
+              {"variableName": "min", "displayName": "Min"},
+              {"variableName": "max", "displayName": "Max"},
+              {"variableName": "comment", "displayName": "Description"},
+              {"displayName": "IRI", "cellTemplate": "<semantic-link iri=\"{{property.value}}\" getlabel=\"false\"></semantic-link><mp-copy-to-clipboard text=\"{{property.value}}\">  <a class=\"ml-2\"><i class=\"fa fa-copy\"></i></a></mp-copy-to-clipboard>"}
+            ]'
+          no-result-template='<i>No attributes with source "<mp-label iri="[[this]]"></mp-label>".</i>'>
+        </semantic-table>
+    </bs-tab>
+    <bs-tab event-key='2' title="Class Hierarchy">
+      <bs-row>
+        <bs-col md=6>
+          <mp-collapsible-div>
+            <mp-collapsible-div-trigger>
+              <b>Subclasses</b>
+            </mp-collapsible-div-trigger>
+            <mp-collapsible-div-content>
+              <semantic-table query='SELECT DISTINCT ?Subclass ?Relation WHERE {
+                  {
+                    ?Subclass rdfs:subClassOf ?? . BIND("direct" as ?Relation)
+                  } UNION {
+                    ?Subclass rdfs:subClassOf+ ?? . BIND("inferred" as ?Relation)
+                    FILTER NOT EXISTS { ?Subclass rdfs:subClassOf ?? }
+                  }
+                  FILTER(!isBlank(?Subclass))
+                }'
+                options='{"showTableHeading":false, "filterPlaceholderText":"Filter Subclasses"}'
+                no-result-template='<i>No <span style="text-transform: lowercase;">Subclasses</span>.</i>'
+                number-of-displayed-rows=5>
+              </semantic-table>
+            </mp-collapsible-div-content>
+          </mp-collapsible-div>
+
+          <mp-collapsible-div>
+            <mp-collapsible-div-trigger>
+              <b>Superclasses</b>
+            </mp-collapsible-div-trigger>
+            <mp-collapsible-div-content>
+              <semantic-table query='SELECT DISTINCT ?Superclass ?Relation WHERE {
+                  {
+                    ?? rdfs:subClassOf ?Superclass . BIND("direct" as ?Relation)
+                  } UNION {
+                    ?? rdfs:subClassOf+ ?Superclass . BIND("inferred" as ?Relation)
+                    FILTER NOT EXISTS { ?? rdfs:subClassOf ?Superclass }
+                  }
+                  FILTER(!isBlank(?Superclass))
+                }'
+                options='{"showTableHeading":false, "filterPlaceholderText":"Filter Superclasses"}'
+                no-result-template='<i>No <span style="text-transform: lowercase;">Superclasses</span>.</i>'
+                number-of-displayed-rows=5>
+              </semantic-table>
+            </mp-collapsible-div-content>
+          </mp-collapsible-div>
+        </bs-col>
+        <bs-col md=6>
+          <semantic-tree
+            query="
+              SELECT DISTINCT ?node ?parent ?test WHERE {
+                { { ?? rdfs:subClassOf* ?node }
+                  UNION
+                  { ?node rdfs:subClassOf* ?? } }
+                OPTIONAL { ?node rdfs:subClassOf ?parent. FILTER(ISIRI(?parent)) }
+                FILTER(ISIRI(?node))
+            }"
+            collapsed="true"
+            keys-opened='["[[this]]"]'>
+          </semantic-tree>
+        </bs-col>
+      </bs-row>
+    </bs-tab>
+    <bs-tab event-key="3" title="Relations">
+      <mp-collapsible-div>
+        <mp-collapsible-div-trigger>
+          <b>Relations with <mp-label iri="[[this]]"></mp-label> as domain</b>
+        </mp-collapsible-div-trigger>
+        <mp-collapsible-div-content>
+          <semantic-table query='SELECT ?property WHERE { ?property rdfs:domain ?? ; a owl:ObjectProperty . FILTER(ISIRI(?property))}'
+          	options='{"showTableHeading":false, "filterPlaceholderText":"Filter Properties"}'
+            no-result-template='<i>No relations with domain "<mp-label iri="[[this]]"></mp-label>".</i>'>
+          </semantic-table>
+        </mp-collapsible-div-content>
+      </mp-collapsible-div>
+
+      <mp-collapsible-div>
+        <mp-collapsible-div-trigger>
+          <b>Relations with <mp-label iri="[[this]]"></mp-label> as range</b>
+        </mp-collapsible-div-trigger>
+        <mp-collapsible-div-content>
+          <semantic-table query='SELECT ?property WHERE { ?property rdfs:range ?? ; a owl:ObjectProperty . FILTER(ISIRI(?property))}'
+          	options='{"showTableHeading":false, "filterPlaceholderText":"Filter Properties"}'
+            no-result-template='<i>No relations with range "<mp-label iri="[[this]]"></mp-label>".</i>'>
+          </semantic-table>
+        </mp-collapsible-div-content>
+      </mp-collapsible-div>
+
+      <mp-collapsible-div>
+        <mp-collapsible-div-trigger>
+          <b>Relations with <mp-label iri="[[this]]"></mp-label> as source</b>
+        </mp-collapsible-div-trigger>
+        <mp-collapsible-div-content>
+          <semantic-table query='SELECT ?property WHERE { {
+                                  ?nodeShape <http://www.w3.org/ns/shacl#targetClass> ?? .
+                                  ?nodeShape <http://www.w3.org/ns/shacl#property> ?sh .
+                                } UNION {
+                                  ?? <http://www.w3.org/ns/shacl#property> ?sh .
+                                }
+                                ?sh <http://www.w3.org/ns/shacl#path> ?property .
+                                ?property a owl:ObjectProperty.  
+                                FILTER(ISIRI(?property))
+                              }'
+          	options='{"showTableHeading":false, "filterPlaceholderText":"Filter Properties"}'
+            no-result-template='<i>No relations with source "<mp-label iri="[[this]]"></mp-label>".</i>'>
+          </semantic-table>
+        </mp-collapsible-div-content>
+      </mp-collapsible-div>
+
+      <mp-collapsible-div>
+        <mp-collapsible-div-trigger>
+          <b>Relations with <mp-label iri="[[this]]"></mp-label> as target</b>
+        </mp-collapsible-div-trigger>
+        <mp-collapsible-div-content>
+          <semantic-table query='SELECT ?property WHERE { 
+                                  ?sh <http://www.w3.org/ns/shacl#class> ?? .
+                                  ?sh <http://www.w3.org/ns/shacl#path> ?property .
+                                 ?property a owl:ObjectProperty.  
+                                 FILTER(ISIRI(?property))
+                              }'
+          	options='{"showTableHeading":false, "filterPlaceholderText":"Filter Properties"}'
+            no-result-template='<i>No relations with target "<mp-label iri="[[this]]"></mp-label>".</i>'>
+          </semantic-table>
+        </mp-collapsible-div-content>
+      </mp-collapsible-div>
+
+    </bs-tab>
+
+     <bs-tab event-key="4" title="Attributes">
+      <mp-collapsible-div>
+        <mp-collapsible-div-trigger>
+          <b>Attributes with <mp-label iri="[[this]]"></mp-label> as domain</b>
+        </mp-collapsible-div-trigger>
+        <mp-collapsible-div-content>
+          <semantic-table query='SELECT ?property WHERE { ?property rdfs:domain ?? ; a owl:DatatypeProperty . FILTER(ISIRI(?property))}'
+          	options='{"showTableHeading":false, "filterPlaceholderText":"Filter Properties"}'
+            no-result-template='<i>No attributes with domain "<mp-label iri="[[this]]"></mp-label>".</i>'>
+          </semantic-table>
+        </mp-collapsible-div-content>
+      </mp-collapsible-div>
+
+      <mp-collapsible-div>
+        <mp-collapsible-div-trigger>
+          <b>Attributes with <mp-label iri="[[this]]"></mp-label> as source</b>
+        </mp-collapsible-div-trigger>
+        <mp-collapsible-div-content>
+          <semantic-table query='SELECT ?property WHERE { {
+                                  ?nodeShape <http://www.w3.org/ns/shacl#targetClass> ?? .
+                                  ?nodeShape <http://www.w3.org/ns/shacl#property> ?sh .
+                                } UNION {
+                                  ?? <http://www.w3.org/ns/shacl#property> ?sh .
+                                }
+                                ?sh <http://www.w3.org/ns/shacl#path> ?property .
+                                ?property a owl:DatatypeProperty.  
+                                FILTER(ISIRI(?property))
+                              }'
+          	options='{"showTableHeading":false, "filterPlaceholderText":"Filter Properties"}'
+            no-result-template='<i>No attributes with source "<mp-label iri="[[this]]"></mp-label>".</i>'>
+          </semantic-table>
+        </mp-collapsible-div-content>
+      </mp-collapsible-div>
+
+    
+    </bs-tab>
+
+    <bs-tab event-key="5" title="Individuals">
+      <semantic-query query='SELECT (COUNT(*) as ?number) WHERE { {SELECT ?Instance WHERE{ {?Instance rdf:type ??.} UNION {?Instance rdf:type/rdfs:subClassOf+ ??.} FILTER(ISIRI(?Instance))}   LIMIT 1000 } }'
+      	template='{{#each bindings}}{{#ifCond number.value ">" 0}} {{#ifCond number.value ">=" 1000}}<bs-alert variant="warning"> The table below is limited to show only a preview of <strong>1000 individuals</strong>. However, the absolute number of individuals of type <strong>[[this.label]]</strong> seems to be larger. </bs-alert>{{else}} <bs-alert variant="info"> <strong>{{number.value}}</strong> individuals of type <strong>[[this.label]]</strong>. Blank nodes are not considered.</bs-alert> {{/ifCond}}{{/ifCond}}{{/each}} '>
+      </semantic-query>
+      <semantic-table query='SELECT DISTINCT ?Instance ?Relation WHERE {
+      		{
+        		?Instance rdf:type ??. BIND("direct" as ?Relation)
+        	} UNION {
+        		?Instance rdf:type ?type . ?type rdfs:subClassOf+ ??.
+        		BIND("inferred" as ?Relation)
+        	}
+        	FILTER(ISIRI(?Instance))
+        } LIMIT 1000'
+        options='{"showTableHeading":false, "filterPlaceholderText":"Filter Individuals"}'
+        no-result-template='<i>No individuals of rdf:type "<mp-label iri="[[this]]"></mp-label>". Blank nodes are not considered.</i>'>
+      </semantic-table>
+    </bs-tab>
+    [[> "http://www.metaphacts.com/resource/LinksToOtherDatabases" eventKey='5']]
+    <bs-tab event-key="6" title="Diagrams">
+      [[> Assets:OntodiaDiagramsTable resource=(this)]]
+    </bs-tab>
+  </bs-tabs>
+</div>

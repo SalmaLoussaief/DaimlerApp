@@ -1,0 +1,487 @@
+[[!--
+
+<style type='text/css'>
+  .SemanticSearchFacet--relationAndContent:not(:first-child) {
+    border: 1px solid var(--mp-color-livid-light);
+    margin-top: 8px;
+  }
+
+
+  .page-bg {
+    position: relative; 
+    height: 70vh;
+    width: 100%;
+    background-image: url("/assets/Background_image3.png");
+}
+
+.white {
+  background-color: #fff
+  opacity: 1;
+}
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+</style>
+
+
+
+<div class="page"  >
+<div style='text-align:center; font-size:36px;'> Appstore Portal</div> 
+  <div class='page__body'>
+<!--   <img src='/assets/Background_images_4.png' style='width: 50%; height: 350px; margin-bottom:50px;' class="center">   -->
+
+   <img src='/assets/Background_image3.png' style='width: 50%; height: 300px; margin-bottom:50px;' class="center"> 
+
+    <div style='position: relative; z-index:14000'>
+    <div class='keyword-type-query__links'>
+                     
+      <mp-event-target-template-render id='btn-toggleAdvancedSearch-container' template='{{> btnHideQueryBuilder}}'>
+        <template id='btnHideQueryBuilder'>
+          <div>
+            {{#if advancedSearch}}
+              <mp-event-trigger id='event-trigger' type='Component.TemplateUpdate' data='{"advancedSearch": null}' targets='["mainSearch", "btn-toggleAdvancedSearch-container"]'>
+                <a title="Switch to advanced search" id='event-trigger--quickSearchLink' >Simple Search <i style="color: #e91e63;" class="fa fa-filter"></i></a>
+              </mp-event-trigger>
+            {{else}}
+              <mp-event-trigger id='event-trigger' type='Component.TemplateUpdate' data='{"advancedSearch": "true"}' targets='["mainSearch", "btn-toggleAdvancedSearch-container"]'>
+                <a title="Switch to main search" id='event-trigger--queryBuilderLink'>Advanced Search <i style="color: #0070BF;" class="fa fa-filter"></i></a>
+              </mp-event-trigger>
+            {{/if}}
+          </div>
+        </template>
+      </mp-event-target-template-render>
+      
+    </div>
+  </div>
+
+ <mp-event-target-template-render id='mainSearch' template='{{> search}}'>
+    <template id='search'>
+      {{#if advancedSearch}}
+        <style> .keyword-type-query__links { top: -30px } </style>
+        {{> :Start }}
+      {{else}} 
+      
+        <div style='margin: 70px 10px;'>
+          <div>
+
+
+    <semantic-search selector-mode='dropdown' optimizer='none'
+      relations='{
+          "<http://ontologies.daimlertruck.com/_dimension>": [{
+            "kind": "resource",
+            "queryPattern": "{ $subject <http://ontologies.daimlertruck.com/contains>/<http://ontologies.daimlertruck.com/hasDimension>  ?__value__ . }"
+          }],
+           "<http://ontologies.daimlertruck.com/_signal>": [{
+            "kind": "resource",
+            "queryPattern": "{ $subject <http://ontologies.daimlertruck.com/contains>/<http://ontologies.daimlertruck.com/hasSignal>  ?__value__ . }"
+          }]
+      }'
+
+      search-profile='{
+        "categories": [
+          {"iri": "<http://ontologies.daimlertruck.com/App>", "label": "Apps"},
+          {"iri": "<http://ontologies.daimlertruck.com/Owner>", "label": "Owner"},
+          {"iri": "<http://ontologies.daimlertruck.com/LoadSpectra>", "label": "LoadSpectra"},
+          {"iri": "<http://ontologies.daimlertruck.com/Dimension>", "label": "Dimension"},
+          {"iri": "<http://ontologies.daimlertruck.com/Signal>", "label": "Signal"}
+
+        ],
+        "relations": [
+    {
+            "iri": "<http://ontologies.daimlertruck.com/contains>",
+            "label": "Load Spectra",
+            "hasDomain": "<http://ontologies.daimlertruck.com/App>",
+            "hasRange": "<http://ontologies.daimlertruck.com/LoadSpectra>"
+          },
+              {
+            "iri": "<http://ontologies.daimlertruck.com/_dimension>",
+            "label": "Dimension",
+            "hasDomain": "<http://ontologies.daimlertruck.com/App>",
+            "hasRange": "<http://ontologies.daimlertruck.com/Dimension>"
+          },
+              {
+            "iri": "<http://ontologies.daimlertruck.com/_signal>",
+            "label": "Signal",
+            "hasDomain": "<http://ontologies.daimlertruck.com/App>",
+            "hasRange": "<http://ontologies.daimlertruck.com/Signal>"
+          },
+
+          {
+            "iri": "<http://ontologies.daimlertruck.com/createdBy>",
+            "label": "Owner",
+            "hasDomain": "<http://ontologies.daimlertruck.com/App>",
+            "hasRange": "<http://ontologies.daimlertruck.com/Owner>"
+          }
+          ]
+      }'
+    >
+        <semantic-search-query-keyword
+               domain='<http://ontologies.daimlertruck.com/App>'
+               placeholder='Search for apps'
+               min-search-term-length=2
+               query=' 
+                  PREFIX lookup: <http://www.metaphacts.com/ontologies/platform/repository/lookup#>
+                  PREFIX dt: <http://ontologies.daimlertruck.com/>
+                  SELECT ?subject  WHERE {
+                  bind (replace(?__token__, "( *)([^ ]+)( *)", "+$2* ") as ?newtoken)
+                  
+?search a <http://www.ontotext.com/connectors/lucene/instance#index_any> .
+  ?search <http://www.ontotext.com/connectors/lucene#query> ?newtoken  .
+  ?search <http://www.ontotext.com/connectors/lucene#entities> ?subject .
+  ?search <http://www.ontotext.com/connectors/lucene#limit> 100 .
+  ?subject <http://www.ontotext.com/connectors/lucene#score> ?score_private .
+                }'
+                default-query='
+                    PREFIX dt: <http://ontologies.daimlertruck.com/>
+                    SELECT ?subject {
+                      ?subject a dt:App.
+                    }
+                  '
+             >
+        </semantic-search-query-keyword>
+
+        <semantic-search-facet-store id='facet'></semantic-search-facet-store>
+
+        <div style='display: flex;'>
+          <semantic-search-facet-holder style='flex: 0.33; padding-right: 16px;' collapsible='none'>
+              <semantic-search-facet-group show-header='false' allow-multiple-open='true' show-inactive-relations='false'></semantic-search-facet-group>
+          </semantic-search-facet-holder>
+
+          <semantic-search-result-holder>
+            <div style='flex: 1;'>
+              <semantic-search-facet-breadcrumbs></semantic-search-facet-breadcrumbs>
+              <semantic-search-result>
+
+
+                <semantic-query id='results' query='PREFIX dt: <http://ontologies.daimlertruck.com/>
+                    SELECT distinct ?subject ?description ?owner (count(distinct ?loadSpectra) as ?Count)
+                    Where { ?subject rdfs:comment ?description;
+                                     dt:createdBy ?owner. 
+                            optional {?subject dt:contains ?loadSpectra.}} Group by ?subject ?description ?owner '
+                    template='{{> appsTemplate}}'>
+                    <template id='appsTemplate'>
+
+                    {{#each bindings}}
+                    <div style='display: flex ;'>
+                    <div class="card flex-row" style=' width: 600px; height: 250px;  margin-bottom: 50px; display:inline-block;  flex-direction: row;' >
+                       <div class="row no-gutters">
+                         <div class="col-auto">
+                          <mp-resource-thumbnail class="card-img-top" iri='{{subject.value}}' style='height: 250px; width:250px;' no-image-uri="/images/help/thenounproject/noun_1113333.svg"> </mp-resource-thumbnail>
+                         </div>
+                         <div class="col">
+                          <div class="card-body" >
+                            <h5 class="card-title"> <mp-knowledge-panel-trigger iri='{{subject.value}}'></mp-knowledge-panel-trigger></h5>
+                            <p class="card-text"> Description : {{description.value}}</p>
+                             Owner :  <semantic-link iri='{{owner.value}}'> <mp-label iri='{{owner.value}}'> </mp-label> </semantic-link>
+                             <br>
+                             Count of load spectra: {{Count.value}}
+                          </div>    
+                         </div>
+                       </div>
+                    </div>     
+                  
+                    </div>
+                    {{/each}}
+
+
+                    </template>
+                </semantic-query>
+              </semantic-search-result>
+            </div>
+          </semantic-search-result-holder>
+           <mp-knowledge-panel-frame></mp-knowledge-panel-frame>
+        </div>
+    </semantic-search>
+                  </div>
+        </div>
+            {{/if}}
+            </template>
+      </mp-event-target-template-render>
+  </div>
+</div>
+--]]
+
+<style>
+
+    .center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+  </style>
+
+  
+<!--  <bs-navbar class='navbar-custom'>
+
+  <bs-navbar-header>
+    <bs-navbar-brand>
+      <a href="/resource/Start">Home</a>
+    </bs-navbar-brand>
+
+  </bs-navbar-header>
+
+  <bs-nav>
+    The metamodel dropdown menu
+    <bs-nav-dropdown title="Ontology View" id="OntologyView-nav-dropdown">
+      <bs-menu-item>
+      <semantic-link iri="http://ontologies.daimlertruck.com/load_spectra" urlqueryparam-diagramIri="http://localhost:10214/container/ontodiaDiagramContainer/loadspectraappdiagram" style='font-size: 12px;'> Go to default Diagram</semantic-link>
+      </bs-menu-item>
+      <bs-menu-item>
+      <semantic-link iri="http://ontologies.daimlertruck.com/load_spectra" urlqueryparam-diagram-iri="http://localhost:10214/container/ontodiaDiagramContainer/loadspectraappdiagram" style='font-size: 12px;'> Go to custom Diagram</semantic-link>
+      </bs-menu-item>
+    </bs-nav-dropdown>
+
+
+  </bs-nav>
+</bs-navbar> -->
+
+<div class="page">
+ <!-- <img src='/assets/Background_image3.png' style='width: 50%; height: 300px; margin-bottom:50px;' class="center"> -->
+
+  <div class="page__body" >
+  <bs-tabs id="tabs" track-url-param="active-tab">
+  <bs-tab event-key="tab1" title="Advanced Search">
+
+
+    
+
+    <semantic-search id="search1"
+      relations='{
+        "<http://ontologies.daimlertruck.com/_hasUnit>": [{
+          "kind": "resource",
+          "queryPattern": " $subject <http://ontologies.daimlertruck.com/hasSignal>/<http://ontologies.daimlertruck.com/hasUnit> ?__value__ . " }],
+        "<http://ontologies.daimlertruck.com/_hasAxis>": [{
+          "kind": "resource",
+          "queryPattern": " $subject <http://ontologies.daimlertruck.com/hasSignal>/<http://ontologies.daimlertruck.com/hasAxis> ?__value__ . " }]
+      }'
+      search-profile='{
+      "categories": [
+                {
+          "iri": "<http://ontologies.daimlertruck.com/App>",
+          "label": "App"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/LoadSpectra>",
+          "label": "Load Spectra"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/Dimension>",
+          "label": "Dimension",
+          "includeAsDomain": false
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/Signal>",
+          "label": "Signal"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/Unit>",
+          "label": "Unit",
+          "includeAsDomain": false
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/Axis>",
+          "label": "axis",
+          "includeAsDomain": false
+        },
+       {
+          "iri": "<http://ontologies.daimlertruck.com/Vehicle>",
+          "label": "Vehicle"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/SalesCode>",
+          "label": "Sales Code"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/Configuration>",
+          "label": "Configuration",
+          "includeAsDomain": false
+        }
+      ],
+      "relations": [
+        {
+          "iri": "<http://ontologies.daimlertruck.com/hasDimension>",
+          "label": "dimension",
+          "hasDomain": "<http://ontologies.daimlertruck.com/LoadSpectra>",
+          "hasRange": "<http://ontologies.daimlertruck.com/Dimension>"
+        },
+        {
+            "iri": "<http://ontologies.daimlertruck.com/hasConfiguration>",
+            "label": "Vehicle Configuration",
+            "hasDomain": "<http://ontologies.daimlertruck.com/Vehicle>",
+            "hasRange": "<http://ontologies.daimlertruck.com/Configuration>"
+          },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/belongsto>",
+          "label": "belongs to App",
+          "hasDomain": "<http://ontologies.daimlertruck.com/LoadSpectra>",
+          "hasRange": "<http://ontologies.daimlertruck.com/App>"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/hasSignal>",
+          "label": "signal",
+          "hasDomain": "<http://ontologies.daimlertruck.com/LoadSpectra>",
+          "hasRange": "<http://ontologies.daimlertruck.com/Signal>"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/_hasUnit>",
+          "label": "unit",
+          "hasDomain": "<http://ontologies.daimlertruck.com/LoadSpectra>",
+          "hasRange": "<http://ontologies.daimlertruck.com/Unit>"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/_hasAxis>",
+          "label": "axis",
+          "hasDomain": "<http://ontologies.daimlertruck.com/LoadSpectra>",
+          "hasRange": "<http://ontologies.daimlertruck.com/Axis>"
+        },
+        {
+          "iri": "<http://ontologies.daimlertruck.com/hasAxis>",
+          "label": "axis",
+          "hasDomain": "<http://ontologies.daimlertruck.com/Signal>",
+          "hasRange": "<http://ontologies.daimlertruck.com/Axis>"
+        },
+       {
+          "iri": "<http://ontologies.daimlertruck.com/contains>",
+          "label": "contains",
+          "hasDomain": "<http://ontologies.daimlertruck.com/App>",
+          "hasRange": "<http://ontologies.daimlertruck.com/LoadSpectra>"
+        }
+      ]
+    }'>
+
+      <semantic-search-query-keyword-type 
+
+      inline-suggest='true' suggestion-template='{{> suggestions-template}}'>
+          <template id='suggestions-template'>
+             {{#switch kind}}
+              {{#case 'search' break=true}}
+                <div class="InlineDisambiguation--search">
+                  Search for "<span class="InlineDisambiguation--searchTerm">{{searchTerm}}</span>"
+                </div>
+              {{/case}}
+              {{#case 'group' break=true}}
+                <div class="InlineDisambiguation--group" title="{{domain.iri}}">
+                  {{domain.label}}
+                </div>
+              {{/case}}
+              {{#case 'resource' break=true}}
+                <div class="InlineDisambiguation--resource" title="{{resource.iri}}">
+
+                   <semantic-query query='
+                   select ?resource ?description ?purpose ?image
+                   where 
+                   {  bind(<{{resource.iri}}> as ?resource) 
+                   optional { ?resource <http://www.w3.org/2000/01/rdf-schema#comment> ?description.}
+                   optional { ?resource <http://ontologies.daimlertruck.com/purpose> ?purpose}
+                   optional {?resource <http://ontologies.daimlertruck.com/belongsto> ?app.
+                            ?app <http://schema.org/thumbnail> ?image.}
+             
+                   }
+                   
+                   ' template='{{> template}}'>
+                     <template id='template'>
+                       {{#each bindings}}
+                       {{#if image}}
+                       <div style='display:inline-block; '> <img src='{{image.value}}' style='height:50px; width:50px; padding-bottom:15px; '>  &nbsp &nbsp 
+                       
+                         <div style='display:inline-block; '> 
+                         
+                           <mp-highlight style='padding-top:30px;' highlight="{{../searchTerm}}">{{../resource.label}}</mp-highlight> 
+                           <br>   <div style='font-size:12px;'> {{description.value}} </div > <div style='font-size:12px; display:inline-block;'> {{purpose.value}}  </div>  
+                        </div>
+                       </div>
+                       
+                        {{else}}
+                        <mp-highlight highlight="{{../searchTerm}}">{{../resource.label}}</mp-highlight>
+                        <br>
+                        <div style='font-size:12px;'> {{description.value}} </div > <div style='font-size:12px;'> {{purpose.value}}</div>
+                        {{/if}}
+                      {{/each}}
+                     </template>
+                   </semantic-query>
+                  
+                </div>
+              {{/case}}
+            {{/switch}}
+          </template>
+
+      </semantic-search-query-keyword-type>
+
+      <div style="display: flex;">
+        <semantic-search-facet-store id="facets"></semantic-search-facet-store>
+        <semantic-search-facet-group></semantic-search-facet-group>
+
+        <semantic-search-result-holder>
+          <div style="flex: 1;">
+            <!-- Result counts -->
+            <semantic-search-result>
+              <mp-sparql-result-counts id="result-counts" query="SELECT DISTINCT * {}" template="{{> searchResultTemplate}}">
+                <template id="searchResultTemplate">
+                  {{#if hasLimit}}
+                    <bs-alert variant="warning">
+                      Showing <span class="num-results">{{numberOfResults}}</span>
+                      of {{totalNumberOfResults}} matches. <strong>Please, refine your search.</strong>
+                    </bs-alert>
+                  {{else}}
+                    <span>found <span class="num-results">{{numberOfResults}}</span> matches</span>
+                  {{/if}}
+                </template>
+              </mp-sparql-result-counts>
+            </semantic-search-result>
+            <!-- Table -->
+            <semantic-search-result-holder>
+              <semantic-search-result>
+                <semantic-table id="results-table" query="SELECT DISTINCT ?subject { }" 
+                options='{"showFilter": false}'
+                column-configuration='[
+                  {"variableName": "subject", "displayName": "Results ", "cellTemplate": "<mp-knowledge-panel-trigger iri=\"{{subject.value}}\"> </mp-knowledge-panel-trigger>" }]'
+                >
+                </semantic-table>
+              </semantic-search-result>
+            </semantic-search-result-holder>
+          </div>
+        </semantic-search-result-holder>
+        <mp-knowledge-panel-frame></mp-knowledge-panel-frame>
+      </div>
+    </semantic-search>
+
+
+     </bs-tab>
+       <bs-tab event-key="tab2" title="Graph Exploration">
+      <div style="border: 1px solid #80808026; height:  800px">
+        <ontodia >
+      
+
+            <mp-workspace-layout>
+              <mp-workspace-row>
+                <mp-workspace-column default-size="800" >
+                 
+                  <mp-workspace-item id='canvas'>
+                          <ontodia-canvas id="canvas-demo5">
+                             <ontodia-toolbar></ontodia-toolbar>
+                          </ontodia-canvas>
+                  </mp-workspace-item>
+                   <mp-workspace-item id="instances-search" heading="Instances" default-collapsed='true' default-size='200'>
+                    <ontodia-instances-search></ontodia-instances-search>
+                  </mp-workspace-item>
+                </mp-workspace-column>
+              </mp-workspace-row>
+            </mp-workspace-layout>
+       
+
+      
+          
+
+        </ontodia>
+  </div>
+  </bs-tab>
+</bs-tabs>
+
+  </div>
+</div>
+
+

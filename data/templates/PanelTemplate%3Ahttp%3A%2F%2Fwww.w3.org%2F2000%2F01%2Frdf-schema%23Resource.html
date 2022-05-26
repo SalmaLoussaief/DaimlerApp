@@ -1,0 +1,113 @@
+[[> Platform:KnowledgePanelStyles]]
+
+<div class='knowledge-panel'>
+  <div class='knowledge-panel__header'>
+    <div class='knowledge-panel__thumbnail'>
+      <mp-resource-thumbnail iri='[[this]]'></mp-resource-thumbnail>
+    </div>
+    <mp-popover>
+      <mp-popover-trigger placement='bottom' trigger='["hover", "focus"]'>
+        <div class='knowledge-panel__title'>
+          <mp-label iri='[[this]]'></mp-label>
+        </div>
+      </mp-popover-trigger>
+      <mp-popover-content>
+        <mp-label iri='[[this]]'></mp-label>
+      </mp-popover-content>
+    </mp-popover>
+  </div>
+  <div class='knowledge-panel__content'>
+    <div class='knowledge-panel__link'>
+      <semantic-link iri='[[this]]'>
+        <i class='fa fa-link'></i><span class='knowledge-panel__link-text'>Navigate to resource</span>
+      </semantic-link>
+    </div>
+  <div class='knowledge-panel__uri'>
+    <div title='[[this]]' class='knowledge-panel__uri-text'>
+      <b>URI:</b> [[this]]
+    </div>
+    <mp-copy-to-clipboard text='[[this]]'>
+      <button class='btn btn-link btn-sm knowledge-panel__uri-copy-button'>
+        <i class='fa fa-clipboard'></i>
+      </button>
+    </mp-copy-to-clipboard>
+  </div>
+  <semantic-query query="SELECT DISTINCT ?type WHERE { <[[this]]> a ?type }"
+  	template='{{> template}}'>
+    <template id='template'>
+      <b>Type</b>:
+      {{#each bindings}}
+        {{#if (isIri type)}}
+          <semantic-link uri='{{type.value}}'></semantic-link>
+        {{else}}
+          {{type.value}}
+        {{/if}}
+        {{#unless @last}},&nbsp;{{/unless}}
+      {{/each}}
+    </template>
+  </semantic-query>
+  <div class='knowledge-panel__datasets'>
+      {{#> Assets:DatasetsHelpers::datasets-list-for-iri iri='[[this]]'}}
+      {{/Assets:DatasetsHelpers::datasets-list-for-iri}}
+  </div>
+
+  [[!-- filter ?p not in is naive way of filtering out existing metadata on types, labels and thumbnails, regardless of the configuration in the settings --]]
+
+  <div class='knowledge-panel__table'>
+ <!--   <br>
+     <semantic-search >
+        <semantic-search-query-keyword 
+        query='
+         PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
+         SELECT DISTINCT ?subject  WHERE {
+                    bind (replace(?__token__, "( *)([^ ]+)( *)", "+$2* ") as ?newtoken)
+                    ?search a <http://www.ontotext.com/connectors/lucene/instance#index_any>.
+                     ?search luc:query ?newtoken .
+                     ?search luc:entities ?subject .
+                     ?search luc:limit 100 .
+                    ?subject luc:score ?score.
+                    }
+        '
+        placeholder='Search for something' ></semantic-search-query-keyword>
+
+        <semantic-search-result-holder>
+          <semantic-search-result>
+            <semantic-table id='table' query='SELECT ?subject WHERE { } ORDER BY DESC(?score)' options='{"showFilter":false}'></semantic-table>
+          </semantic-search-result>
+        </semantic-search-result-holder>
+      </semantic-search> -->
+
+     <semantic-table
+
+    	query='SELECT DISTINCT * WHERE {
+        <[[this]]> ?p ?o .
+        FILTER (?p NOT IN (rdf:type, rdfs:label, skos:prefLabel))
+      } ORDER BY ASC (?p) LIMIT 500'
+     	options='{
+     
+        "groupingOptions": {
+          
+          "groupedBy": ["p"],
+          "showOnlyAggregatedValue": true
+        },
+        "showTableHeading": false
+      }'
+      column-configuration='[
+        {
+          "displayName":"Property",
+          "variableName": "p",
+          "cellTemplate": "{{> propertyLabelTemplate property=p.value}}"
+        },
+        {
+          "displayName":"Object",
+          "variableName": "o",
+          "aggregation": "concat"
+        }
+      ]'>
+      <template id='propertyLabelTemplate'>
+        <mp-label iri='{{property}}'></mp-label>
+      </template>
+    </semantic-table>
+    </div>
+  </div>
+</div>
