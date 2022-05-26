@@ -27,7 +27,7 @@
 
 
 <div class="page"  >
-<div style='text-align:center; font-size:36px;'> Appstore Portal</div> 
+<div style='text-align:center; font-size:36px;'> test Appstore Portal</div> 
   <div class='page__body'>
 <!--   <img src='/assets/Background_images_4.png' style='width: 50%; height: 350px; margin-bottom:50px;' class="center">   -->
 
@@ -173,7 +173,7 @@
 
                 <semantic-query id='results' query='PREFIX dt: <http://ontologies.daimlertruck.com/>
                 PREFIX luc: <http://www.ontotext.com/connectors/lucene#>
-                    SELECT distinct ?subject ?description ?owner ?snippetField ?snippetText (count(distinct ?loadSpectra) as ?Count)
+                    SELECT distinct ?subject ?description ?owner  (count(distinct ?loadSpectra) as ?Count)
                     Where { ?subject rdfs:comment ?description;
                                      dt:createdBy ?owner. 
                             optional {?subject dt:contains ?loadSpectra.}
@@ -181,7 +181,7 @@
                                       ?snippets luc:snippetField ?snippetField ;
                                                 luc:snippetText ?snippetText .}
                             
-                            } Group by ?subject ?description ?owner ?snippetText ?snippetField '
+                            } Group by ?subject ?description ?owner '
                     template='{{> appsTemplate}}'>
                     <template id='appsTemplate'>
 
@@ -199,12 +199,6 @@
                              <b> Owner </b> :  <semantic-link iri='{{owner.value}}'> <mp-label iri='{{owner.value}}'> </mp-label> </semantic-link>
                              <br>
                              <b> #load spectra </b> {{Count.value}}
-                              <br>
-                              <br>
-                              <b> Snippet Field</b>: {{snippetField.value}} 
-                
-                               <br>
-                               <b>Found entities with this search term</b>:  {{{snippetText.value}}} 
                           </div>    
                          </div>
                        </div>
